@@ -1,8 +1,10 @@
+// Flags: --expose-internals
 'use strict';
 
 require('../common');
 const assert = require('assert');
 const { MIMEType, MIMEParams } = require('util');
+const { toASCIILower } = require('internal/mime');
 
 
 const WHITESPACES = '\t\n\f\r ';
@@ -12,7 +14,7 @@ const NOT_HTTP_QUOTED_STRING_CODE_POINT = '\n';
 const mime = new MIMEType('application/ecmascript; ');
 const mime_descriptors = Object.getOwnPropertyDescriptors(mime);
 const mime_proto = Object.getPrototypeOf(mime);
-const mime_impersonator = Object.create(mime_proto);
+const mime_impersonator = { __proto__: mime_proto };
 for (const key of Object.keys(mime_descriptors)) {
   const descriptor = mime_descriptors[key];
   if (descriptor.get) {
@@ -158,3 +160,8 @@ assert.throws(() => params.set(`x${NOT_HTTP_TOKEN_CODE_POINT}`, 'x'), /parameter
 assert.throws(() => params.set('x', `${NOT_HTTP_QUOTED_STRING_CODE_POINT};`), /parameter value/i);
 assert.throws(() => params.set('x', `${NOT_HTTP_QUOTED_STRING_CODE_POINT}x`), /parameter value/i);
 assert.throws(() => params.set('x', `x${NOT_HTTP_QUOTED_STRING_CODE_POINT}`), /parameter value/i);
+
+assert.strictEqual(toASCIILower('someThing'), 'something');
+assert.strictEqual(toASCIILower('SomeThing'), 'something');
+assert.strictEqual(toASCIILower('SomeThing3'), 'something3');
+assert.strictEqual(toASCIILower('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 'abcdefghijklmnopqrstuvwxyz');

@@ -214,7 +214,7 @@ Returns a list of `PerformanceEntry` objects in chronological order
 with respect to `performanceEntry.startTime` whose `performanceEntry.entryType`
 is equal to `type`.
 
-### `performance.mark([name[, options]])`
+### `performance.mark(name[, options])`
 
 <!-- YAML
 added: v8.5.0
@@ -222,7 +222,7 @@ changes:
   - version: v19.0.0
     pr-url: https://github.com/nodejs/node/pull/44483
     description: This method must be called with the `performance` object as
-                 the receiver.
+                 the receiver. The name argument is no longer optional.
   - version: v16.0.0
     pr-url: https://github.com/nodejs/node/pull/37136
     description: Updated to conform to the User Timing Level 3 specification.
@@ -411,7 +411,7 @@ event type in order for the timing details to be accessed.
 ```js
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 function someFunction() {
@@ -1179,6 +1179,20 @@ Returns a `object` that is the JSON representation of the
 
 ## Class: `PerformanceObserver`
 
+<!-- YAML
+added: v8.5.0
+-->
+
+### `PerformanceObserver.supportedEntryTypes`
+
+<!-- YAML
+added: v16.0.0
+-->
+
+* {string\[]}
+
+Get supported types.
+
 ### `new PerformanceObserver(callback)`
 
 <!-- YAML
@@ -1201,7 +1215,7 @@ changes:
 ```js
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 const obs = new PerformanceObserver((list, observer) => {
@@ -1267,7 +1281,7 @@ or `options.type`:
 ```js
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 const obs = new PerformanceObserver((list, observer) => {
@@ -1303,7 +1317,7 @@ with respect to `performanceEntry.startTime`.
 ```js
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 const obs = new PerformanceObserver((perfObserverList, observer) => {
@@ -1353,7 +1367,7 @@ equal to `name`, and optionally, whose `performanceEntry.entryType` is equal to
 ```js
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 const obs = new PerformanceObserver((perfObserverList, observer) => {
@@ -1409,7 +1423,7 @@ is equal to `type`.
 ```js
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 const obs = new PerformanceObserver((perfObserverList, observer) => {
@@ -1755,7 +1769,7 @@ to execute the callback).
 const async_hooks = require('node:async_hooks');
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 
 const set = new Set();
@@ -1774,7 +1788,7 @@ const hook = async_hooks.createHook({
                           `Timeout-${id}-Init`,
                           `Timeout-${id}-Destroy`);
     }
-  }
+  },
 });
 hook.enable();
 
@@ -1800,7 +1814,7 @@ dependencies:
 'use strict';
 const {
   performance,
-  PerformanceObserver
+  PerformanceObserver,
 } = require('node:perf_hooks');
 const mod = require('node:module');
 

@@ -98,7 +98,9 @@ changes:
     when `import()` is called. If this option is not specified, calls to
     `import()` will reject with [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`][].
     This option is part of the experimental modules API. We do not recommend
-    using it in a production environment.
+    using it in a production environment. If `--experimental-vm-modules` isn't
+    set, this callback will be ignored and calls to `import()` will reject with
+    [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`][].
     * `specifier` {string} specifier passed to `import()`
     * `script` {vm.Script}
     * `importAssertions` {Object} The `"assert"` value passed to the
@@ -206,7 +208,7 @@ const vm = require('node:vm');
 
 const context = {
   animal: 'cat',
-  count: 2
+  count: 2,
 };
 
 const script = new vm.Script('count += 1; name = "kitty";');
@@ -347,7 +349,9 @@ console.log(globalVar);
 ### `script.sourceMapURL`
 
 <!-- YAML
-added: v19.1.0
+added:
+  - v19.1.0
+  - v18.13.0
 -->
 
 * {string|undefined}
@@ -745,6 +749,8 @@ changes:
     `cachedData` was created.
   * `context` {Object} The [contextified][] object as returned by the
     `vm.createContext()` method, to compile and evaluate this `Module` in.
+    If no context is specified, the module is evaluated in the current
+    execution context.
   * `lineOffset` {integer} Specifies the line number offset that is displayed
     in stack traces produced by this `Module`. **Default:** `0`.
   * `columnOffset` {integer} Specifies the first-line column number offset that
@@ -756,6 +762,9 @@ changes:
   * `importModuleDynamically` {Function} Called during evaluation of this module
     when `import()` is called. If this option is not specified, calls to
     `import()` will reject with [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`][].
+    If `--experimental-vm-modules` isn't set, this callback will be ignored
+    and calls to `import()` will reject with
+    [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`][].
     * `specifier` {string} specifier passed to `import()`
     * `module` {vm.Module}
     * `importAssertions` {Object} The `"assert"` value passed to the
@@ -785,7 +794,7 @@ const module = new vm.SourceTextModule(
       // Object.prototype in the top context rather than that in
       // the contextified object.
       meta.prop = {};
-    }
+    },
   });
 // Since module has no dependencies, the linker function will never be called.
 await module.link(() => {});
@@ -812,7 +821,7 @@ const contextifiedObject = vm.createContext({ secret: 42 });
         // Object.prototype in the top context rather than that in
         // the contextified object.
         meta.prop = {};
-      }
+      },
     });
   // Since module has no dependencies, the linker function will never be called.
   await module.link(() => {});
@@ -963,6 +972,13 @@ const vm = require('node:vm');
 added: v10.10.0
 changes:
   - version:
+    - v19.6.0
+    - v18.15.0
+    pr-url: https://github.com/nodejs/node/pull/46320
+    description: The return value now includes `cachedDataRejected`
+                 with the same semantics as the `vm.Script` version
+                 if the `cachedData` option was passed.
+  - version:
     - v17.0.0
     - v16.12.0
     pr-url: https://github.com/nodejs/node/pull/40249
@@ -994,7 +1010,8 @@ changes:
     is displayed in stack traces produced by this script. **Default:** `0`.
   * `cachedData` {Buffer|TypedArray|DataView} Provides an optional `Buffer` or
     `TypedArray`, or `DataView` with V8's code cache data for the supplied
-    source.
+    source. This must be produced by a prior call to [`vm.compileFunction()`][]
+    with the same `code` and `params`.
   * `produceCachedData` {boolean} Specifies whether to produce new cache data.
     **Default:** `false`.
   * `parsingContext` {Object} The [contextified][] object in which the said
@@ -1006,7 +1023,9 @@ changes:
     when `import()` is called. If this option is not specified, calls to
     `import()` will reject with [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`][].
     This option is part of the experimental modules API, and should not be
-    considered stable.
+    considered stable.  If `--experimental-vm-modules` isn't
+    set, this callback will be ignored and calls to `import()` will reject with
+    [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`][].
     * `specifier` {string} specifier passed to `import()`
     * `function` {Function}
     * `importAssertions` {Object} The `"assert"` value passed to the
@@ -1132,8 +1151,9 @@ current V8 isolate, or the main context.
     exits before the next GC). With eager execution, the GC will be started
     right away to measure the memory.
     **Default:** `'default'`
-* Returns: {Promise} If the memory is successfully measured the promise will
+* Returns: {Promise} If the memory is successfully measured, the promise will
   resolve with an object containing information about the memory usage.
+  Otherwise it will be rejected with an `ERR_CONTEXT_NOT_INITIALIZED` error.
 
 The format of the object that the returned Promise may resolve with is
 specific to the V8 engine and may change from one version of V8 to the next.
@@ -1229,7 +1249,9 @@ changes:
     when `import()` is called. If this option is not specified, calls to
     `import()` will reject with [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`][].
     This option is part of the experimental modules API. We do not recommend
-    using it in a production environment.
+    using it in a production environment.  If `--experimental-vm-modules` isn't
+    set, this callback will be ignored and calls to `import()` will reject with
+    [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`][].
     * `specifier` {string} specifier passed to `import()`
     * `script` {vm.Script}
     * `importAssertions` {Object} The `"assert"` value passed to the
@@ -1328,7 +1350,9 @@ changes:
     when `import()` is called. If this option is not specified, calls to
     `import()` will reject with [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`][].
     This option is part of the experimental modules API. We do not recommend
-    using it in a production environment.
+    using it in a production environment. If `--experimental-vm-modules` isn't
+    set, this callback will be ignored and calls to `import()` will reject with
+    [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`][].
     * `specifier` {string} specifier passed to `import()`
     * `script` {vm.Script}
     * `importAssertions` {Object} The `"assert"` value passed to the
@@ -1358,7 +1382,7 @@ const vm = require('node:vm');
 
 const contextObject = {
   animal: 'cat',
-  count: 2
+  count: 2,
 };
 
 vm.runInNewContext('count += 1; name = "kitty"', contextObject);
@@ -1408,7 +1432,9 @@ changes:
     when `import()` is called. If this option is not specified, calls to
     `import()` will reject with [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`][].
     This option is part of the experimental modules API. We do not recommend
-    using it in a production environment.
+    using it in a production environment. If `--experimental-vm-modules` isn't
+    set, this callback will be ignored and calls to `import()` will reject with
+    [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`][].
     * `specifier` {string} specifier passed to `import()`
     * `script` {vm.Script}
     * `importAssertions` {Object} The `"assert"` value passed to the
@@ -1522,7 +1548,7 @@ function loop() {
 vm.runInNewContext(
   'Promise.resolve().then(() => loop());',
   { loop, console },
-  { timeout: 5 }
+  { timeout: 5 },
 );
 // This is printed *before* 'entering loop' (!)
 console.log('done executing');
@@ -1541,7 +1567,7 @@ function loop() {
 vm.runInNewContext(
   'Promise.resolve().then(() => loop());',
   { loop, console },
-  { timeout: 5, microtaskMode: 'afterEvaluate' }
+  { timeout: 5, microtaskMode: 'afterEvaluate' },
 );
 ```
 
@@ -1568,19 +1594,21 @@ are not controllable through the timeout either.
 [GetModuleNamespace]: https://tc39.es/ecma262/#sec-getmodulenamespace
 [HostResolveImportedModule]: https://tc39.es/ecma262/#sec-hostresolveimportedmodule
 [Link() concrete method]: https://tc39.es/ecma262/#sec-moduledeclarationlinking
-[Module Record]: https://www.ecma-international.org/ecma-262/#sec-abstract-module-records
+[Module Record]: https://262.ecma-international.org/14.0/#sec-abstract-module-records
 [Source Text Module Record]: https://tc39.es/ecma262/#sec-source-text-module-records
 [Synthetic Module Record]: https://heycam.github.io/webidl/#synthetic-module-records
 [V8 Embedder's Guide]: https://v8.dev/docs/embed#contexts
+[`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING_FLAG`]: errors.md#err_vm_dynamic_import_callback_missing_flag
 [`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`]: errors.md#err_vm_dynamic_import_callback_missing
 [`ERR_VM_MODULE_STATUS`]: errors.md#err_vm_module_status
 [`Error`]: errors.md#class-error
 [`URL`]: url.md#class-url
 [`eval()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/eval
-[`optionsExpression`]: https://tc39.es/proposal-import-assertions/#sec-evaluate-import-call
+[`optionsExpression`]: https://tc39.es/proposal-import-attributes/#sec-evaluate-import-call
 [`script.runInContext()`]: #scriptrunincontextcontextifiedobject-options
 [`script.runInThisContext()`]: #scriptruninthiscontextoptions
 [`url.origin`]: url.md#urlorigin
+[`vm.compileFunction()`]: #vmcompilefunctioncode-params-options
 [`vm.createContext()`]: #vmcreatecontextcontextobject-options
 [`vm.runInContext()`]: #vmrunincontextcode-contextifiedobject-options
 [`vm.runInThisContext()`]: #vmruninthiscontextcode-options

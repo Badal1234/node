@@ -2,7 +2,16 @@
 
 <!--introduced_in=v8.1.0-->
 
-> Stability: 1 - Experimental
+> Stability: 1 - Experimental. Please migrate away from this API, if you can.
+> We do not recommend using the [`createHook`][], [`AsyncHook`][], and
+> [`executionAsyncResource`][] APIs as they have usability issues, safety risks,
+> and performance implications. Async context tracking use cases are better
+> served by the stable [`AsyncLocalStorage`][] API. If you have a use case for
+> `createHook`, `AsyncHook`, or `executionAsyncResource` beyond the context
+> tracking need solved by [`AsyncLocalStorage`][] or diagnostics data currently
+> provided by [Diagnostics Channel][], please open an issue at
+> <https://github.com/nodejs/node/issues> describing your use case so we can
+> create a more purpose-focused API.
 
 <!-- source_link=lib/async_hooks.js -->
 
@@ -165,7 +174,7 @@ import { createHook } from 'node:async_hooks';
 
 const asyncHook = createHook({
   init(asyncId, type, triggerAsyncId, resource) { },
-  destroy(asyncId) { }
+  destroy(asyncId) { },
 });
 ```
 
@@ -174,7 +183,7 @@ const async_hooks = require('node:async_hooks');
 
 const asyncHook = async_hooks.createHook({
   init(asyncId, type, triggerAsyncId, resource) { },
-  destroy(asyncId) { }
+  destroy(asyncId) { },
 });
 ```
 
@@ -366,6 +375,7 @@ The following is a simple demonstration of `triggerAsyncId`:
 import { createHook, executionAsyncId } from 'node:async_hooks';
 import { stdout } from 'node:process';
 import net from 'node:net';
+import fs from 'node:fs';
 
 createHook({
   init(asyncId, type, triggerAsyncId) {
@@ -373,7 +383,7 @@ createHook({
     fs.writeSync(
       stdout.fd,
       `${type}(${asyncId}): trigger: ${triggerAsyncId} execution: ${eid}\n`);
-  }
+  },
 }).enable();
 
 net.createServer((conn) => {}).listen(8080);
@@ -383,6 +393,7 @@ net.createServer((conn) => {}).listen(8080);
 const { createHook, executionAsyncId } = require('node:async_hooks');
 const { stdout } = require('node:process');
 const net = require('node:net');
+const fs = require('node:fs');
 
 createHook({
   init(asyncId, type, triggerAsyncId) {
@@ -390,7 +401,7 @@ createHook({
     fs.writeSync(
       stdout.fd,
       `${type}(${asyncId}): trigger: ${triggerAsyncId} execution: ${eid}\n`);
-  }
+  },
 }).enable();
 
 net.createServer((conn) => {}).listen(8080);
@@ -434,7 +445,48 @@ The following is an example with additional information about the calls to
 callback to `listen()` will look like. The output formatting is slightly more
 elaborate to make calling context easier to see.
 
-```js
+```mjs
+import async_hooks from 'node:async_hooks';
+import fs from 'node:fs';
+import net from 'node:net';
+import { stdout } from 'node:process';
+const { fd } = stdout;
+
+let indent = 0;
+async_hooks.createHook({
+  init(asyncId, type, triggerAsyncId) {
+    const eid = async_hooks.executionAsyncId();
+    const indentStr = ' '.repeat(indent);
+    fs.writeSync(
+      fd,
+      `${indentStr}${type}(${asyncId}):` +
+      ` trigger: ${triggerAsyncId} execution: ${eid}\n`);
+  },
+  before(asyncId) {
+    const indentStr = ' '.repeat(indent);
+    fs.writeSync(fd, `${indentStr}before:  ${asyncId}\n`);
+    indent += 2;
+  },
+  after(asyncId) {
+    indent -= 2;
+    const indentStr = ' '.repeat(indent);
+    fs.writeSync(fd, `${indentStr}after:  ${asyncId}\n`);
+  },
+  destroy(asyncId) {
+    const indentStr = ' '.repeat(indent);
+    fs.writeSync(fd, `${indentStr}destroy:  ${asyncId}\n`);
+  },
+}).enable();
+
+net.createServer(() => {}).listen(8080, () => {
+  // Let's wait 10ms before logging the server started.
+  setTimeout(() => {
+    console.log('>>>', async_hooks.executionAsyncId());
+  }, 10);
+});
+```
+
+```cjs
 const async_hooks = require('node:async_hooks');
 const fs = require('node:fs');
 const net = require('node:net');
@@ -651,7 +703,7 @@ import { createServer } from 'node:http';
 import {
   executionAsyncId,
   executionAsyncResource,
-  createHook
+  createHook,
 } from 'async_hooks';
 const sym = Symbol('state'); // Private symbol to avoid pollution
 
@@ -661,7 +713,7 @@ createHook({
     if (cr) {
       resource[sym] = cr[sym];
     }
-  }
+  },
 }).enable();
 
 const server = createServer((req, res) => {
@@ -677,7 +729,7 @@ const { createServer } = require('node:http');
 const {
   executionAsyncId,
   executionAsyncResource,
-  createHook
+  createHook,
 } = require('node:async_hooks');
 const sym = Symbol('state'); // Private symbol to avoid pollution
 
@@ -687,7 +739,7 @@ createHook({
     if (cr) {
       resource[sym] = cr[sym];
     }
-  }
+  },
 }).enable();
 
 const server = createServer((req, res) => {
@@ -713,8 +765,10 @@ changes:
 
 ```mjs
 import { executionAsyncId } from 'node:async_hooks';
+import fs from 'node:fs';
 
 console.log(executionAsyncId());  // 1 - bootstrap
+const path = '.';
 fs.open(path, 'r', (err, fd) => {
   console.log(executionAsyncId());  // 6 - open()
 });
@@ -722,8 +776,10 @@ fs.open(path, 'r', (err, fd) => {
 
 ```cjs
 const async_hooks = require('node:async_hooks');
+const fs = require('node:fs');
 
 console.log(async_hooks.executionAsyncId());  // 1 - bootstrap
+const path = '.';
 fs.open(path, 'r', (err, fd) => {
   console.log(async_hooks.executionAsyncId());  // 6 - open()
 });
@@ -869,14 +925,18 @@ The documentation for this class has moved [`AsyncResource`][].
 The documentation for this class has moved [`AsyncLocalStorage`][].
 
 [DEP0111]: deprecations.md#dep0111-processbinding
+[Diagnostics Channel]: diagnostics_channel.md
 [Hook Callbacks]: #hook-callbacks
 [PromiseHooks]: https://docs.google.com/document/d/1rda3yKGHimKIhg5YeoAmCOtyURgsbTH_qaYR79FELlk/edit
+[`AsyncHook`]: #class-asynchook
 [`AsyncLocalStorage`]: async_context.md#class-asynclocalstorage
 [`AsyncResource`]: async_context.md#class-asyncresource
 [`Worker`]: worker_threads.md#class-worker
 [`after` callback]: #afterasyncid
 [`before` callback]: #beforeasyncid
+[`createHook`]: #async_hookscreatehookcallbacks
 [`destroy` callback]: #destroyasyncid
+[`executionAsyncResource`]: #async_hooksexecutionasyncresource
 [`init` callback]: #initasyncid-type-triggerasyncid-resource
 [`process.getActiveResourcesInfo()`]: process.md#processgetactiveresourcesinfo
 [`promiseResolve` callback]: #promiseresolveasyncid

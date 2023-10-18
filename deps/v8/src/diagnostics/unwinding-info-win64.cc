@@ -25,18 +25,18 @@ namespace v8 {
 namespace internal {
 namespace win64_unwindinfo {
 
-bool CanEmitUnwindInfoForBuiltins() { return FLAG_win64_unwinding_info; }
+bool CanEmitUnwindInfoForBuiltins() { return v8_flags.win64_unwinding_info; }
 
 bool CanRegisterUnwindInfoForNonABICompliantCodeRange() {
-  return !FLAG_jitless;
+  return !v8_flags.jitless;
 }
 
 bool RegisterUnwindInfoForExceptionHandlingOnly() {
   DCHECK(CanRegisterUnwindInfoForNonABICompliantCodeRange());
 #if defined(V8_OS_WIN_ARM64)
-  return !FLAG_win64_unwinding_info;
+  return !v8_flags.win64_unwinding_info;
 #else
-  return !IsWindows8OrGreater() || !FLAG_win64_unwinding_info;
+  return !IsWindows8OrGreater() || !v8_flags.win64_unwinding_info;
 #endif
 }
 
@@ -447,7 +447,7 @@ void InitUnwindingRecord(Record* record, size_t code_size_in_bytes) {
   // Hardcoded thunk.
   AssemblerOptions options;
   options.record_reloc_info_for_serialization = false;
-  TurboAssembler masm(nullptr, options, CodeObjectRequired::kNo,
+  MacroAssembler masm(nullptr, options, CodeObjectRequired::kNo,
                       NewAssemblerBuffer(64));
   masm.Mov(x16,
            Operand(reinterpret_cast<uint64_t>(&CRASH_HANDLER_FUNCTION_NAME)));
